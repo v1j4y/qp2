@@ -23,6 +23,9 @@ def extract_data(output):
 
     reading = False
     for iline, line in enumerate(lines):
+        if line.startswith("Summary at N_det"):
+            reading = False
+
         if not reading and line.startswith(" N_det "):
             n_det = int(re.search(r"N_det\s+=\s+(\d+)", line).group(1))
             reading = True
@@ -40,8 +43,8 @@ def extract_data(output):
                 e_ex_line = lines[iline+2]
                 e_ex = float(e_ex_line.split()[1])
                 reading = False
-
-                data.append((n_det, e, pt2, err_pt2, rpt2, err_rpt2, e_ex))
+                new_data = " {:8d}  {:16.8f}  {:e}  {:e}  {:e}  {:e}  {:16.8f}".format(n_det, e, pt2, err_pt2, rpt2, err_rpt2, e_ex)
+                data.append(new_data)
                 n_det = e = pt2 = err_pt2 = rpt2 = err_rpt2 = e_ex = None
 
     return data
@@ -49,6 +52,4 @@ def extract_data(output):
 data = extract_data(output)
 
 for item in data:
-    print(" ".join(str(x) for x in item))
-
-
+    print(item)
