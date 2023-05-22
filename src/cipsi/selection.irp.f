@@ -258,8 +258,6 @@ subroutine select_singles_and_doubles(i_generator,hole_mask,particle_mask,fock_d
   deallocate(exc_degree)
   nmax=k-1
 
-  call isort_noidx(indices,nmax)
-
   ! Start with 32 elements. Size will double along with the filtering.
   allocate(preinteresting(0:32), prefullinteresting(0:32),     &
       interesting(0:32), fullinteresting(0:32))
@@ -766,7 +764,9 @@ subroutine fill_buffer_double(i_generator, sp, h1, h2, bannedOrb, banned, fock_d
 
         alpha_h_psi = mat(istate, p1, p2)
 
-        pt2_data % overlap(:,istate) = pt2_data % overlap(:,istate) + coef(:) * coef(istate)
+        do k=1,N_states
+          pt2_data % overlap(k,istate) = pt2_data % overlap(k,istate) + coef(k) * coef(istate)
+        end do
         pt2_data % variance(istate)  = pt2_data % variance(istate) + alpha_h_psi * alpha_h_psi
         pt2_data % pt2(istate)       = pt2_data % pt2(istate)      + e_pert(istate)
 

@@ -83,7 +83,7 @@ subroutine get_excitation(det1,det2,exc,degree,phase,Nint)
   !               exc(1,1,1) = q
   !               exc(1,2,1) = p
 
-  ! T^alpha_pq  : exc(0,1,2) = 1
+  ! T^beta_pq   : exc(0,1,2) = 1
   !               exc(0,2,2) = 1
   !               exc(1,1,2) = q
   !               exc(1,2,2) = p
@@ -434,6 +434,98 @@ subroutine get_single_excitation(det1,det2,exc,phase,Nint)
 
 end
 
+subroutine get_single_excitation_cfg(cfg1,cfg2,p,q,Nint)
+  use bitmasks
+  implicit none
+  BEGIN_DOC
+  ! Returns the excitation operator between two singly excited configurations.
+  END_DOC
+  integer, intent(in)            :: Nint
+  integer(bit_kind), intent(in)  :: cfg1(Nint,2)
+  integer(bit_kind), intent(in)  :: cfg2(Nint,2)
+  integer, intent(out)           :: p, q
+  integer                        :: tz
+  integer                        :: l, ispin, idx_hole, idx_particle, ishift
+  integer                        :: nperm
+  integer                        :: i,j,k,m,n
+  integer                        :: high, low
+  integer                        :: a,b,c,d
+  integer(bit_kind)              :: hole, particle, tmp
+  integer                        :: exc(0:2,2,2)
+
+  ASSERT (Nint > 0)
+  nperm = 0
+  p = 0
+  q = 0
+  exc(0,1,1) = 0
+  exc(0,2,1) = 0
+  exc(0,1,2) = 0
+  exc(0,2,2) = 0
+  do ispin = 1,2
+    ishift = 1-bit_kind_size
+    do l=1,Nint
+      ishift = ishift + bit_kind_size
+      if (cfg1(l,ispin) == cfg2(l,ispin)) then
+        cycle
+      endif
+      tmp = xor( cfg1(l,ispin), cfg2(l,ispin) )
+      particle = iand(tmp, cfg2(l,ispin))
+      hole     = iand(tmp, cfg1(l,ispin))
+      if (particle /= 0_bit_kind) then
+        tz = trailz(particle)
+        exc(0,2,ispin) = 1
+        exc(1,2,ispin) = tz+ishift
+        !print *,"part ",tz+ishift, " ispin=",ispin
+      endif
+      if (hole /= 0_bit_kind) then
+        tz = trailz(hole)
+        exc(0,1,ispin) = 1
+        exc(1,1,ispin) = tz+ishift
+        !print *,"hole ",tz+ishift, " ispin=",ispin
+      endif
+
+      if ( iand(exc(0,1,ispin),exc(0,2,ispin)) /= 1) then  ! exc(0,1,ispin)/=1 and exc(0,2,ispin) /= 1
+        cycle
+      endif
+
+      high = max(exc(1,1,ispin), exc(1,2,ispin))-1
+      low  = min(exc(1,1,ispin), exc(1,2,ispin))
+
+      ASSERT (low >= 0)
+      ASSERT (high > 0)
+
+      k = shiftr(high,bit_kind_shift)+1
+      j = shiftr(low,bit_kind_shift)+1
+      m = iand(high,bit_kind_size-1)
+      n = iand(low,bit_kind_size-1)
+
+      if (j==k) then
+        nperm = nperm + popcnt(iand(cfg1(j,ispin),           &
+            iand( shiftl(1_bit_kind,m)-1_bit_kind,            &
+                  not(shiftl(1_bit_kind,n))+1_bit_kind)) )
+      else
+        nperm = nperm + popcnt(                                    &
+             iand(cfg1(j,ispin),                                   &
+                  iand(not(0_bit_kind),                            &
+                       (not(shiftl(1_bit_kind,n)) + 1_bit_kind) ))) &
+             + popcnt(iand(cfg1(k,ispin),                          &
+                           (shiftl(1_bit_kind,m) - 1_bit_kind ) ))
+
+        do i=j+1,k-1
+          nperm = nperm + popcnt(cfg1(i,ispin))
+        end do
+
+      endif
+
+      ! Set p and q
+      q = max(exc(1,1,1),exc(1,1,2))
+      p = max(exc(1,2,1),exc(1,2,2))
+      return
+
+    enddo
+  enddo
+end
+
 subroutine bitstring_to_list_ab( string, list, n_elements, Nint)
   use bitmasks
   implicit none
@@ -623,7 +715,8 @@ subroutine i_H_j(key_i,key_j,Nint,hij)
   integer                        :: occ(Nint*bit_kind_size,2)
   double precision               :: diag_H_mat_elem, phase
   integer                        :: n_occ_ab(2)
-  PROVIDE mo_two_e_integrals_in_map mo_integrals_map big_array_exchange_integrals
+  PROVIDE mo_two_e_integrals_in_map mo_integrals_map big_array_exchange_integrals 
+  PROVIDE ao_one_e_integrals mo_one_e_integrals
 
   ASSERT (Nint > 0)
   ASSERT (Nint == N_int)
@@ -681,7 +774,6 @@ subroutine i_H_j(key_i,key_j,Nint,hij)
     case (1)
       call get_single_excitation(key_i,key_j,exc,phase,Nint)
       !DIR$ FORCEINLINE
-      call bitstring_to_list_ab(key_i, occ, n_occ_ab, Nint)
       if (exc(0,1,1) == 1) then
         ! Single alpha
         m = exc(1,1,1)
@@ -699,10 +791,6 @@ subroutine i_H_j(key_i,key_j,Nint,hij)
       hij = diag_H_mat_elem(key_i,Nint)
   end select
 end
-
-
-
-
 
 subroutine i_H_j_verbose(key_i,key_j,Nint,hij,hmono,hdouble,phase)
   use bitmasks
@@ -1037,7 +1125,6 @@ subroutine i_H_psi(key,keys,coef,Nint,Ndet,Ndet_max,Nstate,i_H_psi_array)
   endif
 
 end
-
 
 subroutine i_H_psi_minilist(key,keys,idx_key,N_minilist,coef,Nint,Ndet,Ndet_max,Nstate,i_H_psi_array)
   use bitmasks

@@ -77,7 +77,7 @@ BEGIN_PROVIDER [ integer, psi_det_size ]
   END_DOC
   PROVIDE ezfio_filename
   logical                        :: exists
-  psi_det_size = 1
+  psi_det_size = N_states
   PROVIDE mpi_master
   if (read_wf) then
     if (mpi_master) then
@@ -85,7 +85,7 @@ BEGIN_PROVIDER [ integer, psi_det_size ]
       if (exists) then
         call ezfio_get_determinants_n_det(psi_det_size)
       else
-        psi_det_size = 1
+        psi_det_size = N_states
       endif
       call write_int(6,psi_det_size,'Dimension of the psi arrays')
     endif
@@ -543,7 +543,7 @@ subroutine save_wavefunction_general(ndet,nstates,psidet,dim_psicoef,psicoef)
   integer                        :: i,j,k, ndet_qp_edit
 
   if (mpi_master) then
-    ndet_qp_edit = min(ndet,N_det_qp_edit)
+    ndet_qp_edit = min(ndet,10000)
 
     call ezfio_set_determinants_N_int(N_int)
     call ezfio_set_determinants_bit_kind(bit_kind)
