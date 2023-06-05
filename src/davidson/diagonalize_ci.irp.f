@@ -72,7 +72,8 @@ END_PROVIDER
    if (diag_algorithm == 'Davidson') then
 
      if (do_csf) then
-       if (sigma_vector_algorithm == 'det') then
+       !if (sigma_vector_algorithm == 'det') then
+       if (.False.) then
          call davidson_diag_H_csf (psi_det,                  &
                                    CI_eigenvectors,          &
                                    size(CI_eigenvectors,1),  &
@@ -84,10 +85,13 @@ END_PROVIDER
                                    N_int,                    &
                                    0,                        &
                                    converged)
-       else if (sigma_vector_algorithm == 'cfg') then
+       !else if (sigma_vector_algorithm == 'cfg') then
+       else if (.True.) then
+         print *, " Doing Diag CFG"
           call davidson_diag_H_cfg(psi_det,CI_eigenvectors, &
           size(CI_eigenvectors,1),CI_electronic_energy,               &
           N_det,N_csf,min(N_det,N_states),min(N_det,N_states_diag),N_int,0,converged)
+         print *, " Done  Diag CFG"
        else
           print *, irp_here
           stop 'bug'
@@ -124,24 +128,45 @@ END_PROVIDER
           CI_electronic_energy_tmp(1:N_states_diag_save) = CI_electronic_energy(1:N_states_diag_save)
           CI_eigenvectors_tmp(1:N_det,1:N_states_diag_save) = CI_eigenvectors(1:N_det,1:N_states_diag_save)
 
-          call davidson_diag_H_csf (psi_det,                      &
-                                    CI_eigenvectors_tmp,          &
-                                    size(CI_eigenvectors_tmp,1),  &
-                                    CI_electronic_energy_tmp,     &
-                                    N_det,                        &
-                                    N_csf,                        &
-                                    min(N_csf,N_states),          &
-                                    min(N_csf,N_states_diag),     &
-                                    N_int,                        &
-                                    0,                            &
-                                    converged)
+          !if (sigma_vector_algorithm == 'det') then
+          if (.False.) then
+
+            call davidson_diag_H_csf (psi_det,                      &
+                                      CI_eigenvectors_tmp,          &
+                                      size(CI_eigenvectors_tmp,1),  &
+                                      CI_electronic_energy_tmp,     &
+                                      N_det,                        &
+                                      N_csf,                        &
+                                      min(N_csf,N_states),          &
+                                      min(N_csf,N_states_diag),     &
+                                      N_int,                        &
+                                      0,                            &
+                                      converged)
+
+          else if (.True.) then
+            print *, " Doing Diag CFG"
+             call davidson_diag_H_cfg (psi_det,                     &
+                                       CI_eigenvectors_tmp,         &
+                                       size(CI_eigenvectors_tmp,1), &
+                                       CI_electronic_energy_tmp,    &
+                                       N_det,                       &
+                                       N_csf,                       &
+                                       min(N_det,N_states),         &
+                                       min(N_det,N_states_diag),    &
+                                       N_int,                       &
+                                       0,                           &
+                                       converged)
+            print *, " Done  Diag CFG"
+          else
+             print *, irp_here
+             stop 'bug'
+          endif
 
           CI_electronic_energy(1:N_states_diag_save) = CI_electronic_energy_tmp(1:N_states_diag_save)
           CI_eigenvectors(1:N_det,1:N_states_diag_save) = CI_eigenvectors_tmp(1:N_det,1:N_states_diag_save)
 
           deallocate (CI_electronic_energy_tmp)
           deallocate (CI_eigenvectors_tmp)
-
         else
 
           allocate (CI_electronic_energy_tmp (N_states_diag) )

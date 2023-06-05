@@ -582,11 +582,13 @@ use bitmasks
 
   do idxI = 1, N_configuration
 
-    Icfg  = psi_configuration(:,:,idxI)
-    Jcfg  = psi_configuration(:,:,idxI)
-
     !print *,"idxI=",idxI
     do ii=1, N_int
+      Icfg(ii,1)  = iand(act_bitmask(ii,1),psi_configuration(ii,1,idxI))
+      Icfg(ii,2)  = iand(act_bitmask(ii,2),psi_configuration(ii,2,idxI))
+      Jcfg(ii,1)  = iand(act_bitmask(ii,1),psi_configuration(ii,1,idxI))
+      Jcfg(ii,2)  = iand(act_bitmask(ii,2),psi_configuration(ii,2,idxI))
+
       Isomo(ii) = iand(act_bitmask(ii,1),psi_configuration(ii,1,idxI))
       Idomo(ii) = iand(act_bitmask(ii,2),psi_configuration(ii,2,idxI))
       !print *,Isomo(ii), Idomo(ii)
@@ -906,8 +908,8 @@ use bitmasks
       ! SOMO
       if(Nsomo_I .ge. NSOMOMin) then
         NalphaIcfg += 1
-        alphasIcfg_list(:,1,idxI,NalphaIcfg) = Icfg(:,1)
-        alphasIcfg_list(:,2,idxI,NalphaIcfg) = Icfg(:,2)
+        alphasIcfg_list(:,1,idxI,NalphaIcfg) = psi_configuration(:,1,idxI)
+        alphasIcfg_list(:,2,idxI,NalphaIcfg) = psi_configuration(:,2,idxI)
         NalphaIcfg_list(idxI) = NalphaIcfg
       endif
           !print *,"         ---> ", NalphaIcfg, Icfg(1,1), Icfg(2,1), "|", Icfg(1,2), Icfg(2,2)

@@ -1638,11 +1638,11 @@ subroutine calculate_sigma_vector_cfg_nst_naive_store(psi_out, psi_in, n_st, sze
       !$OMP   idxs_connectedI_alpha,nconnectedI,excitationIds,excitationTypes,diagfactors,&
       !$OMP   totcolsTKI,rowsTKI,NSOMOalpha,rowsikpq,                &
       !$OMP   colsikpq, GIJpqrs,TKIGIJ,j,l,m,TKI,CCmattmp, moi, moj, mok, mol,&
-      !$OMP   diagfac, tmpvar, diagfactors_0)                                            &
+      !$OMP     nelall, listall, Nsomo_I, countelec,&
+      !$OMP   diagfac, tmpvar, diagfactors_0, pp, qq, iint, jint, ipos, jpos)            &
       !$OMP shared(istart_cfg, iend_cfg, psi_configuration, mo_num, psi_config_data,&
       !$OMP    N_int, N_st, psi_out, psi_in, h_core_ri, core_energy, h_act_ri, AIJpqContainer,&
-      !$OMP     pp, sze, NalphaIcfg_list,alphasIcfg_list, bit_tmp,       &
-      !$OMP     qq, iint, jint, ipos, jpos, nelall, listall, Nsomo_I, countelec,&
+      !$OMP     sze, NalphaIcfg_list,alphasIcfg_list, bit_tmp,       &
       !$OMP     AIJpqMatrixDimsList, diag_energies, n_CSF, lock, NBFmax,nconnectedtotalmax, nconnectedmaxJ,maxnalphas,&
       !$OMP     n_core_orb, n_act_orb, list_act, n, list_core,  list_core_is_built,core_act_contrib, num_threads_max,&
       !$OMP     n_core_orb_is_built, mo_integrals_map, mo_integrals_map_is_built)
@@ -1905,6 +1905,8 @@ subroutine calculate_sigma_vector_cfg_nst_naive_store(psi_out, psi_in, n_st, sze
      ! TODO : remove doubly excited for return
      !print *,"I=",i,"isomo=",psi_configuration(1,1,i),psi_configuration(2,1,i),POPCNT(psi_configuration(1,1,i)),POPCNT(psi_configuration(2,1,i)),&
      !"idomo=",psi_configuration(1,2,i),psi_configuration(2,2,i),POPCNT(psi_configuration(1,2,i)),POPCNT(psi_configuration(2,2,i)), "Nalphas_Icfg=",Nalphas_Icfg
+     !print *,"I=",i," na=",Nalphas_Icfg, " psi(i)=",psi_out(1,i)
+     !print *," so=",psi_configuration(1,1,i), " do=",psi_configuration(1,2,i)
      do k = 1,Nalphas_Icfg
         ! Now generate all singly excited with respect to a given alpha CFG
 
@@ -1914,6 +1916,7 @@ subroutine calculate_sigma_vector_cfg_nst_naive_store(psi_out, psi_in, n_st, sze
 
         call obtain_connected_I_foralpha(i, alphas_Icfg(1,1,k), connectedI_alpha, idxs_connectedI_alpha, &
                                          nconnectedI, excitationIds, excitationTypes, diagfactors)
+        !print *," k=",k," nconn=",nconnectedI
 
         !if(i .EQ. 218) then
         !   print *,'k=',k,' kcfgSOMO=',alphas_Icfg(1,1,k),alphas_Icfg(2,1,k),' ',POPCNT(alphas_Icfg(1,1,k)),' &
@@ -1936,7 +1939,8 @@ subroutine calculate_sigma_vector_cfg_nst_naive_store(psi_out, psi_in, n_st, sze
            p = excitationIds(1,j)
            q = excitationIds(2,j)
            extype = excitationTypes(j)
-           !print *,"K=",k,"j=",j, "countelec=",countelec," p=",p," q=",q, " extype=",extype, "NSOMOalpha=",NSOMOalpha," NSOMOI=",NSOMOI, "alphas_Icfg(1,1,k)=",alphas_Icfg(1,1,k), &
+           !print *,p,q, idxs_connectedI_alpha(j)
+           !print *,"K=",k,"j=",j, " p=",p," q=",q, " extype=",extype, "NSOMOalpha=",NSOMOalpha," NSOMOI=",NSOMOI, "alphas_Icfg(1,1,k)=",alphas_Icfg(1,1,k), &
            !alphas_Icfg(2,1,k), " domo=",alphas_Icfg(1,2,k), alphas_Icfg(2,2,k), " connected somo=",connectedI_alpha(1,1,j), &
            !connectedI_alpha(2,1,j), " domo=",connectedI_alpha(1,2,j), connectedI_alpha(2,2,j)
            call convertOrbIdsToModelSpaceIds(alphas_Icfg(1,1,k), connectedI_alpha(1,1,j), p, q, extype, pmodel, qmodel)

@@ -112,8 +112,8 @@ subroutine davidson_diag_cfg_hjj(dets_in,u_in,H_jj,energies,dim_in,sze,sze_csf,N
   double precision, allocatable  :: U(:,:), U_csf(:,:), overlap(:,:)
   double precision, allocatable  :: tmpU(:,:), tmpW(:,:)
   double precision, pointer      :: W(:,:), W_csf(:,:)
-  !double precision, pointer      :: W2(:,:), W_csf2(:,:)
-  !double precision, allocatable  :: U2(:,:), U_csf2(:,:)
+  double precision, pointer      :: W2(:,:), W_csf2(:,:)
+  double precision, allocatable  :: U2(:,:), U_csf2(:,:)
   logical                        :: disk_based
   double precision               :: energy_shift(N_st_diag_in*davidson_sze_max)
 
@@ -236,15 +236,15 @@ subroutine davidson_diag_cfg_hjj(dets_in,u_in,H_jj,energies,dim_in,sze,sze_csf,N
     call c_f_pointer(ptr_w, W_csf, (/sze_csf,N_st_diag*itermax/))
   else
     allocate(W(sze,N_st_diag),W_csf(sze_csf,N_st_diag*itermax))
-    !allocate(W2(sze,N_st_diag),W_csf2(sze_csf,N_st_diag*itermax))
+    allocate(W2(sze,N_st_diag),W_csf2(sze_csf,N_st_diag*itermax))
   endif
 
   allocate(                                                          &
       ! Large
       U(sze,N_st_diag),                                              &
-      !U2(sze,N_st_diag),                                              &
+      U2(sze,N_st_diag),                                              &
       U_csf(sze_csf,N_st_diag*itermax),                              &
-      !U_csf2(sze_csf,N_st_diag*itermax),                              &
+      U_csf2(sze_csf,N_st_diag*itermax),                              &
 
       ! Small
       h(N_st_diag*itermax,N_st_diag*itermax),                        &
@@ -329,8 +329,9 @@ subroutine davidson_diag_cfg_hjj(dets_in,u_in,H_jj,energies,dim_in,sze,sze_csf,N
                 tmpU(kk,ii) = U_csf(ii,shift+kk)
               enddo
             enddo
+            !do i=1,sze_csf
             !tmpU     =0.0d0
-            !tmpU(1,1)=1.0d0
+            !tmpU(1,i)=1.0d0
             double precision               :: irp_rdtsc
             double precision               :: ticks_0, ticks_1
             integer*8                      :: irp_imax
@@ -346,17 +347,34 @@ subroutine davidson_diag_cfg_hjj(dets_in,u_in,H_jj,energies,dim_in,sze,sze_csf,N
             enddo
 
             !U_csf = 0.0d0
-            !U_csf(1,1) = 1.0d0
+            !U_csf(i,1) = 1.0d0
+            !allocate(tmpU(sze_csf,N_st_diag))
+            !allocate(tmpW(sze_csf,N_st_diag))
+            !do kk=1,N_st_diag
+            !  do ii=1,sze_csf
+            !    tmpU(ii,kk) = U_csf(ii,shift+kk)
+            !  enddo
+            !enddo
             !u_in = 0.0d0
-            !call convertWFfromCSFtoDET(N_st_diag,tmpU,U2)
+            !call convertWFfromCSFtoDET(N_st_diag,U_csf,U2)
             !call H_u_0_nstates_openmp(u_in,U2,N_st_diag,sze)
-            !call convertWFfromDETtoCSF(N_st_diag,u_in(1,1),W_csf2(1,1))
-            !do i=1,sze_csf
-            !  print *,"I=",i," qp=",W_csf2(i,1)," my=",W_csf(i,1)," diff=",dabs(W_csf2(i,1))-dabs(W_csf(i,1))
-            !  !if(dabs(dabs(W_csf2(i,1))-dabs(W_csf(i,1))) .gt. 1.0e-10)then
-            !  !  print *,"somo=",psi_configuration(1,1,i)," domo=",psi_configuration(1,2,i)," diff=",dabs(W_csf2(i,1))-dabs(W_csf(i,1))
-            !  !endif
+            !call convertWFfromDETtoCSF(N_st_diag,u_in(1,1),tmpW(1,1))
+            !do kk=1,N_st_diag
+            !  do ii=1,sze_csf
+            !    W_csf2(ii,shift+kk)=tmpW(ii,kk)
+            !  enddo
+            !enddo
+            !do ii=1,sze_csf
+              !print *,"I=",ii," qp=",W_csf(ii,shift+1),"|",dabs(W_csf(ii,shift+1))-dabs(W_csf2(ii,shift+1))," somo=",psi_configuration(1,1,ii), " domo=",psi_configuration(1,2,ii)
+              !print *,"I=",i," qp=",W_csf2(i,1)," my=",W_csf(i,1)," diff=",dabs(W_csf2(i,1))-dabs(W_csf(i,1))
+              !if(dabs(dabs(W_csf2(i,1))-dabs(W_csf(i,1))) .gt. 1.0e-10)then
+              !  print *,"somo=",psi_configuration(1,1,i)," domo=",psi_configuration(1,2,i)," diff=",dabs(W_csf2(i,1))-dabs(W_csf(i,1))
+              !endif
             !end do
+            !enddo
+            !if(iter==3)then
+            !  stop
+            !endif
             !stop
             deallocate(tmpW)
             deallocate(tmpU)

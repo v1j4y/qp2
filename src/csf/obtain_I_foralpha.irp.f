@@ -304,8 +304,8 @@ subroutine obtain_connected_I_foralpha(idxI, Ialpha, connectedI, idxs_connectedI
        nxordiffSOMODOMO += POPCNT(xordiffSOMODOMO)
        nxordiffSOMODOMO += POPCNT(diffSOMO) + POPCNT(diffDOMO)
      end do
-     !if(idxI.eq.218)then
-     !  print *,"I=",idxI,"Nsomo_alpha=",Nsomo_alpha,"nxordiffSOMODOMO(4)=",nxordiffSOMODOMO, " ndiffSOMO(2)=",ndiffSOMO, " ndiffDOMO=",ndiffDOMO
+     !if(idxI.eq.17)then
+     !  print *,"IdxI=",idxI," i=",i," Nsomo_alpha=",Nsomo_alpha,"nxordiffSOMODOMO(4)=",nxordiffSOMODOMO, " ndiffSOMO(2)=",ndiffSOMO, " ndiffDOMO=",ndiffDOMO
      !endif
      !Jcfg = psi_configuration(:,:,i)
      !print *,"nxordiffSOMODOMO(4)=",nxordiffSOMODOMO, " ndiffSOMO(2)=",ndiffSOMO
@@ -565,6 +565,7 @@ subroutine obtain_connected_I_foralpha(idxI, Ialpha, connectedI, idxs_connectedI
               excitationIds(2,nconnectedI)=q
               excitationTypes(nconnectedI) = extyp
               diagfactors(nconnectedI) = 1.0d0
+              !print *, "IdxI=",IdxI, " i=",i," starti=",starti, " pq=",p,q
            else
               starti = psi_config_data(i,1)
               endi   = psi_config_data(i,2)
@@ -576,6 +577,7 @@ subroutine obtain_connected_I_foralpha(idxI, Ialpha, connectedI, idxs_connectedI
               excitationIds(2,nconnectedI)=q
               excitationTypes(nconnectedI) = extyp
               diagfactors(nconnectedI) = 2.0d0
+              !print *, "IdxI=",IdxI, " i=",i," starti=",starti, " pq=",p,q
            endif
            !print *,excitationIds(1,nconnectedI), excitationIds(2,nconnectedI)
         enddo
